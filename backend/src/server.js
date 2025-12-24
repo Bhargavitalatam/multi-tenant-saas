@@ -1,22 +1,28 @@
-const app = require("./app");
-const { pool } = require("./config/db");
+require('dotenv').config();
+const app = require('./app');
+const { pool } = require('./config/db');
 
 const PORT = process.env.PORT || 5000;
 
-/* -------------------- Start Server -------------------- */
-const startServer = async () => {
+// Function to initialize DB tables and seed data
+const initializeDB = async () => {
   try {
-    // Test database connection
-    await pool.query("SELECT 1");
-    console.log("✅ Database connected successfully");
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error("❌ Failed to start server:", error.message);
-    process.exit(1);
+    const client = await pool.connect();
+    console.log('✅ Database connected');
+    
+    // IMPORTANT: This is where you should trigger your table creation 
+    // and seeding logic to meet the "Automatic Only" requirement.
+    // Example: await client.query('CREATE TABLE IF NOT EXISTS tenants...');
+    
+    client.release();
+  } catch (err) {
+    console.error('❌ Database connection error', err.stack);
+    process.exit(1); // Exit if DB fails
   }
 };
 
-startServer();
+initializeDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+});
