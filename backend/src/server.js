@@ -1,28 +1,33 @@
-require('dotenv').config();
-const app = require('./app');
-const { pool } = require('./config/db');
+const express = require('express');
+const cors = require('cors');
+const db = require('./config/db'); // Your database config
+
+const app = express(); // <--- THIS MUST BE FIRST
+
+app.use(cors());
+app.use(express.json());
+
+// MANDATORY HEALTH CHECK (Requirement [cite: 97])
+app.get('/api/health', async (req, res) => {
+  try {
+    await db.pool.query('SELECT 1');
+    res.status(200).json({ 
+      success: true, 
+      message: "System status: Healthy", 
+      database: "Connected" 
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      success: false, 
+      message: "System status: Unhealthy", 
+      database: "Disconnected" 
+    });
+  }
+});
+
+// ... your other routes (auth, projects, etc) ...
 
 const PORT = process.env.PORT || 5000;
-
-// Function to initialize DB tables and seed data
-const initializeDB = async () => {
-  try {
-    const client = await pool.connect();
-    console.log('✅ Database connected');
-    
-    // IMPORTANT: This is where you should trigger your table creation 
-    // and seeding logic to meet the "Automatic Only" requirement.
-    // Example: await client.query('CREATE TABLE IF NOT EXISTS tenants...');
-    
-    client.release();
-  } catch (err) {
-    console.error('❌ Database connection error', err.stack);
-    process.exit(1); // Exit if DB fails
-  }
-};
-
-initializeDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

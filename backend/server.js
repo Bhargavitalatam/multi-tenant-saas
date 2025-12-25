@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { Pool } = require('pg');
 
 // Load environment variables
 dotenv.config();
@@ -8,39 +9,69 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// ---------------------------------------------------------
-// TASK 5.1.1: CORS Configuration (MANDATORY)
-// ---------------------------------------------------------
+// 1. Database Configuration
+const pool = new Pool({
+  host: process.env.DB_HOST || 'database',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
+  database: process.env.DB_NAME || 'saas_db',
+  port: 5432,
+});
+
+// 2. Database Initialization Logic
+const initializeDatabase = async () => {
+  const createTablesQuery = `
+    CREATE TABLE IF NOT EXISTS tenants (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      subdomain VARCHAR(255) UNIQUE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      role VARCHAR(50) DEFAULT 'user',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  try {
+    await pool.query(createTablesQuery);
+    console.log("✅ Database tables verified/created successfully.");
+  } catch (err) {
+    console.error("❌ Database initialization error:", err);
+  }
+};
+
+initializeDatabase();
+
+// 3. CORS Configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 
-// ---------------------------------------------------------
-// TASK 5.2.2: Health Check Endpoint (MANDATORY)
-// ---------------------------------------------------------
-// The evaluation script calls this to see if your DB is ready
+// 4. MANDATORY Health Check Endpoint
+// This is what Docker uses to see if the container is "Healthy"
 app.get('/api/health', async (req, res) => {
   try {
-    // This is a placeholder for your DB connection check. 
-    // If using Sequelize: await sequelize.authenticate();
-    // If using pg: await pool.query('SELECT 1');
-    const dbConnected = true; // Set based on your actual DB connection logic
-
-    if (dbConnected) {
-      res.status(200).json({ status: "ok", database: "connected" });
-    } else {
-      throw new Error("Database not connected");
-    }
+    // Check if DB is reachable
+    await pool.query('SELECT 1');
+    res.status(200).json({ 
+      status: "ok", 
+      database: "connected",
+      timestamp: new Date().toISOString()
+    });
   } catch (err) {
     res.status(500).json({ status: "error", database: "disconnected" });
   }
 });
 
-// Import your other routes here (Auth, Projects, Users)
-// app.use('/api/auth', authRoutes);
-
+// 5. Start the Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Backend service running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Backend service running on port ${PORT}`);
 });

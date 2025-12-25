@@ -1,7 +1,6 @@
--- UP
 CREATE TABLE users (
-    id UUID PRIMARY KEY,
-    tenant_id UUID,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID, -- Keep as NULLable for Super Admin 
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
@@ -9,11 +8,6 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_tenant FOREIGN KEY (tenant_id)
-        REFERENCES tenants(id)
-        ON DELETE CASCADE,
+    CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
     CONSTRAINT unique_tenant_email UNIQUE (tenant_id, email)
 );
-
--- DOWN
-DROP TABLE IF EXISTS users;

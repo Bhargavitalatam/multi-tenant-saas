@@ -1,8 +1,8 @@
-FROM node:18
+FROM node:20-alpine
+RUN apk add --no-cache curl
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install
-RUN apt-get update && apt-get install -y curl
+RUN npm install --only=production
 COPY . .
 EXPOSE 5000
-CMD ["npm", "start"]
+CMD ["node", "src/server.js"]

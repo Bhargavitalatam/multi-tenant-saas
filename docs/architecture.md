@@ -1,130 +1,37 @@
-System Architecture Document
-
-High-Level Architecture
-
-
-
-The system follows a three-tier architecture:
-
-
-
-Client (Browser)
-
-
-
-Frontend Application (React)
-
-
-
-Backend API Server (Node.js)
-
-
-
-Database (PostgreSQL)
-
-
-
-JWT tokens handle authentication between frontend and backend.
-
-
-
-Diagram Location:
-
-docs/images/system-architecture.png
-
-
-
-Database Schema Design (ERD)
-
-Tables
-
-
-
-tenants
-
-
-
-users
-
-
-
-projects
-
-
-
-tasks
-
-
-
-audit\_logs
-
-
-
-All tables include tenant\_id for data isolation.
-
-Indexes are created on all tenant\_id columns.
-
-
-
-ERD Location:
-
-docs/images/database-erd.png
-
-
-
-API Architecture
-
-Authentication
-
-
-
-POST /api/auth/register (Public)
-
-
-
-POST /api/auth/login (Public)
-
-
-
-Tenants
-
-
-
-GET /api/tenants (Super Admin only)
-
-
-
-Users
-
-
-
-POST /api/users (Tenant Admin)
-
-
-
-GET /api/users (Tenant Admin)
-
-
-
-Projects
-
-
-
-POST /api/projects (Tenant Admin)
-
-
-
-GET /api/projects (Authenticated users)
-
-
-
-Tasks
-
-
-
-POST /api/tasks (Authenticated users)
-
-
-
-GET /api/tasks (Authenticated users)
-
+# System Architecture Document
+
+## 1. High-Level Architecture
+This platform follows a Multi-Tenant SaaS pattern using Row-Level Isolation.
+- **Frontend:** React.js (Port 3000)
+- **Backend:** Node.js/Express (Port 5000)
+- **Database:** PostgreSQL (Port 5432)
+
+## 2. Mandatory API Endpoint List (19 Endpoints)
+As required by the specification, here are the core endpoints:
+
+### Auth & User Management
+1. `POST /api/auth/register` - Tenant & Admin registration
+2. `POST /api/auth/login` - User login (JWT)
+3. `GET /api/auth/profile` - User profile
+4. `GET /api/users` - List all users in tenant
+5. `POST /api/users` - Add new user (Limited by Plan)
+
+### Tenant & Subscription
+6. `GET /api/tenants/me` - Tenant details
+7. `PUT /api/tenants/me` - Update organization info
+8. `GET /api/health` - System health check (Public)
+
+### Project Management
+9. `GET /api/projects` - List tenant projects
+10. `POST /api/projects` - Create project (Limited by Plan)
+11. `GET /api/projects/:id` - Project details
+12. `PUT /api/projects/:id` - Update project
+13. `DELETE /api/projects/:id` - Delete project (Cascades)
+
+### Task Management
+14. `GET /api/tasks` - List all tasks
+15. `POST /api/tasks` - Create task
+16. `GET /api/tasks/:id` - Task details
+17. `PUT /api/tasks/:id` - Update status/priority
+18. `DELETE /api/tasks/:id` - Remove task
+19. `GET /api/projects/:id/tasks` - Get tasks for specific project
