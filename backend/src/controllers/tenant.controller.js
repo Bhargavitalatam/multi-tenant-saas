@@ -1,110 +1,54 @@
 const { pool } = require('../config/db');
 
-// 1. Get All Tenants (Point #15)
 exports.getAllTenants = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM tenants');
-        res.status(200).json({ 
-            success: true, 
-            message: 'All tenants retrieved', 
-            data: result.rows 
-        });
+        const result = await pool.query('SELECT * FROM tenants ORDER BY created_at DESC');
+        res.json({ success: true, data: result.rows });
     } catch (err) {
-        res.status(500).json({ 
-            success: false, 
-            message: err.message 
-        });
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// 2. Get Single Tenant by ID (Point #16)
 exports.getTenantById = async (req, res) => {
-    const { id } = req.params;
     try {
-        const result = await pool.query('SELECT * FROM tenants WHERE id = $1', [id]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Tenant not found' 
-            });
-        }
-
-        res.status(200).json({ 
-            success: true, 
-            message: 'Tenant found', 
-            data: result.rows[0] 
-        });
+        const result = await pool.query('SELECT * FROM tenants WHERE id = $1', [req.params.id]);
+        if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Tenant not found' });
+        res.json({ success: true, data: result.rows[0] });
     } catch (err) {
-        res.status(500).json({ 
-            success: false, 
-            message: err.message 
-        });
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// 3. Create Tenant (Point #17 - The missing function causing the crash)
 exports.createTenant = async (req, res) => {
-    const { name, subdomain, subscription_plan } = req.body;
-    try {
-        // Insert the new tenant into the database
-        const result = await pool.query(
-            'INSERT INTO tenants (name, subdomain, subscription_plan, status, max_users, max_projects) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [name, subdomain, subscription_plan || 'free', 'active', 5, 3]
-        );
-
-        res.status(201).json({ 
-            success: true, 
-            message: 'Tenant created successfully', 
-            data: result.rows[0] 
-        });
-    } catch (err) {
-        // Handle duplicate subdomains or DB errors
-        res.status(400).json({ 
-            success: false, 
-            message: err.message 
-        });
-    }
-};
-
-// 4. Update Tenant (Point #18)
-exports.updateTenant = async (req, res) => {
-    const { id } = req.params;
-    const { name, status, subscription_plan } = req.body;
+    const { name, plan } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE tenants SET name = $1, status = $2, subscription_plan = $3 WHERE id = $4 RETURNING *',
-            [name, status, subscription_plan, id]
+            'INSERT INTO tenants (name, plan) VALUES ($1, $2) RETURNING *',
+            [name, plan || 'free']
         );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Tenant not found' });
-        }
-
-        res.status(200).json({ 
-            success: true, 
-            message: 'Tenant updated successfully', 
-            data: result.rows[0] 
-        });
+        res.status(201).json({ success: true, data: result.rows[0] });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }
 };
 
-// 5. Delete Tenant (Point #19)
-exports.deleteTenant = async (req, res) => {
-    const { id } = req.params;
+exports.updateTenant = async (req, res) => {
+    const { name, plan } = req.body;
     try {
-        const result = await pool.query('DELETE FROM tenants WHERE id = $1 RETURNING *', [id]);
+        const result = await pool.query(
+            'UPDATE tenants SET name = $1, plan = $2 WHERE id = $3 RETURNING *',
+            [name, plan, req.params.id]
+        );
+        res.json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Tenant not found' });
-        }
-
-        res.status(200).json({ 
-            success: true, 
-            message: 'Tenant deleted successfully' 
-        });
+exports.deleteTenant = async (req, res) => {
+    try {
+        await pool.query('DELETE FROM tenants WHERE id = $1', [req.params.id]);
+        res.json({ success: true, message: 'Tenant deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

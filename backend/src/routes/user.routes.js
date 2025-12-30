@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
-const auth = require('../middlewares/auth');
-const role = require('../middlewares/role');
+const { protect, authorize } = require('../middlewares/auth');
 
-// User Management Routes
-router.get('/', auth, userController.getUsers);
-router.get('/:id', auth, userController.getUserById);
-router.put('/:id', auth, role(['admin', 'super_admin']), userController.updateUser);
-router.delete('/:id', auth, role(['admin', 'super_admin']), userController.deleteUser);
+// Management routes
+router.get('/', protect, authorize('tenant_admin', 'super_admin'), userController.getUsers);
+router.get('/:id', protect, userController.getUserById);
+router.delete('/:id', protect, authorize('super_admin'), userController.deleteUser);
 
 module.exports = router;

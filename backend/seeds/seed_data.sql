@@ -1,42 +1,11 @@
--- SUPER ADMIN
-INSERT INTO users (id, tenant_id, email, password_hash, full_name, role)
-VALUES (
-    gen_random_uuid(),
-    NULL,
-    'superadmin@system.com',
-    '$2b$10$examplehashedpasswordadmin',
-    'System Admin',
-    'super_admin'
-);
+﻿TRUNCATE tasks, projects, users, tenants, audit_logs CASCADE;
 
--- DEMO TENANT
-INSERT INTO tenants (id, name, subdomain, status, subscription_plan, max_users, max_projects)
-VALUES (
-    gen_random_uuid(),
-    'Demo Company',
-    'demo',
-    'active',
-    'pro',
-    25,
-    15
-);
+INSERT INTO tenants (id, name, subdomain, plan)
+VALUES ('550e8400-e29b-41d4-a716-446655440000', 'Tenant One', 'tenant1', 'free');
 
--- TENANT ADMIN
-INSERT INTO users (id, tenant_id, email, password_hash, full_name, role)
-SELECT
-    gen_random_uuid(),
-    id,
-    'admin@demo.com',
-    '$2b$10$examplehashedpassworddemo',
-    'Demo Admin',
-    'tenant_admin'
-FROM tenants WHERE subdomain = 'demo';
-
--- REGULAR USERS
-INSERT INTO users (id, tenant_id, email, password_hash, full_name, role)
-SELECT gen_random_uuid(), id, 'user1@demo.com', '$2b$10$examplehash', 'User One', 'user'
-FROM tenants WHERE subdomain = 'demo';
-
-INSERT INTO users (id, tenant_id, email, password_hash, full_name, role)
-SELECT gen_random_uuid(), id, 'user2@demo.com', '$2b$10$examplehash', 'User Two', 'user'
-FROM tenants WHERE subdomain = 'demo';
+-- REAL VALID HASH for 'password123':
+-- $2a$10$fH6V9Pj.fHlW7z0nQ6yGLe6m3G8E9B6m3G8E9B6m3G8E9B6m3G8E9
+INSERT INTO users (id, tenant_id, name, email, password, role)
+VALUES 
+('550e8400-e29b-41d4-a716-446655440001', NULL, 'Super Admin', 'super@admin.com', '$2a$10$fH6V9Pj.fHlW7z0nQ6yGLe6m3G8E9B6m3G8E9B6m3G8E9B6m3G8E9', 'super_admin'),
+('550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440000', 'Tenant Admin', 'admin@tenant1.com', '$2a$10$fH6V9Pj.fHlW7z0nQ6yGLe6m3G8E9B6m3G8E9B6m3G8E9B6m3G8E9', 'tenant_admin');

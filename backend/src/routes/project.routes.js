@@ -1,13 +1,14 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/project.controller');
-const auth = require('../middlewares/auth');
+const { protect, authorize } = require('../middlewares/auth');
 
-// Project CRUD Routes
-router.get('/', auth, projectController.getProjects);
-router.post('/', auth, projectController.createProject);
-router.get('/:id', auth, projectController.getProjectById);
-router.put('/:id', auth, projectController.updateProject);
-router.delete('/:id', auth, projectController.deleteProject);
+router.use(protect);
+
+router.get('/', projectController.getProjects);
+router.get('/:id', projectController.getProjectById);
+router.post('/', authorize('tenant_admin', 'super_admin'), projectController.createProject);
+router.put('/:id', authorize('tenant_admin', 'super_admin'), projectController.updateProject);
+router.delete('/:id', authorize('tenant_admin', 'super_admin'), projectController.deleteProject);
 
 module.exports = router;
