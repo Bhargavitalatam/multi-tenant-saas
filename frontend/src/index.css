@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App-level styles */
+html, body, #root { height: 100%; }
+body { @apply bg-gray-50 text-gray-900; }
+
+.container { @apply max-w-6xl mx-auto px-4; }
+
+.card { @apply bg-white rounded-xl shadow-sm ring-1 ring-gray-200; }
+.card-header { @apply px-5 pt-5 font-semibold; }
+.card-body { @apply px-5 pb-5; }
